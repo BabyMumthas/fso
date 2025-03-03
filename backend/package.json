@@ -2,7 +2,7 @@
   "name": "phonebook-api",
   "version": "1.0.0",
   "description": "Simple REST API with NodeJS and Express",
-  "master": "index.js",
+  "main": "index.js",
   "type": "module",
   "scripts": {
     "start": "node backend/index.js",
