@@ -7,9 +7,8 @@ const app = express();
 
 // Middleware
 app.use(express.json());
-app.use(express.static('dist'))
+app.use(express.static('dist'));
 app.use(cors());
-
 
 // MongoDB Connection (Fixed)
 const mongoUrl = process.env.MONGODB_URI || 'your-mongodb-connection-string';
@@ -19,11 +18,16 @@ if (!mongoUrl) {
     process.exit(1);
 }
 
+mongoose.set('strictQuery', false); // ✅ Fixes deprecation warning
+
 mongoose.connect(mongoUrl, {
-    useNewUrlParser: true,  // ✅ Fixes deprecated warning
+    useNewUrlParser: true,
     useUnifiedTopology: true,
-    writeConcern: { w: "majority", wtimeout: 5000 } 
+    serverSelectionTimeoutMS: 5000, // 5 seconds timeout
+    connectTimeoutMS: 10000, // 10 seconds timeout
+    writeConcern: { w: "majority", wtimeout: 5000 }
 })
+
 .then(() => console.log("✅ Connected to MongoDB"))
 .catch(err => console.error("❌ MongoDB connection error:", err));
 
@@ -44,15 +48,13 @@ const asyncHandler = fn => (req, res, next) => {
 };
 
 // ✅ /info Route
-app.get('/info', async (req, res) => {
+app.get('/info', asyncHandler(async (req, res) => {
     const count = await Person.countDocuments({});
-    const date = new Date();
     res.send(`
         <p>Phonebook has info for ${count} people.</p>
-        <p>${date}</p>
+        <p>${new Date()}</p>
     `);
-});
-
+}));
 
 // ✅ Get all persons
 app.get('/api/persons', asyncHandler(async (req, res) => {
@@ -61,7 +63,7 @@ app.get('/api/persons', asyncHandler(async (req, res) => {
 }));
 
 // ✅ Get a single person by ID with ID validation
-app.get('/api/persons/:id', asyncHandler(async (req, res, next) => {
+app.get('/api/persons/:id', asyncHandler(async (req, res) => {
     const { id } = req.params;
 
     if (!isValidObjectId(id)) {
@@ -69,11 +71,7 @@ app.get('/api/persons/:id', asyncHandler(async (req, res, next) => {
     }
 
     const person = await Person.findById(id);
-    if (person) {
-        res.json(person);
-    } else {
-        res.status(404).json({ error: 'Person not found' });
-    }
+    person ? res.json(person) : res.status(404).json({ error: 'Person not found' });
 }));
 
 // ✅ Add a new person
@@ -89,8 +87,7 @@ app.post('/api/persons', asyncHandler(async (req, res) => {
         return res.status(400).json({ error: 'Name must be unique' });
     }
 
-    const person = new Person({ name, number });
-    const savedPerson = await person.save();
+    const savedPerson = await new Person({ name, number }).save();
     res.status(201).json(savedPerson);
 }));
 
@@ -103,10 +100,7 @@ app.delete('/api/persons/:id', asyncHandler(async (req, res) => {
     }
 
     const person = await Person.findByIdAndDelete(id);
-    if (!person) {
-        return res.status(404).json({ error: 'Person not found' });
-    }
-    res.status(204).end();
+    person ? res.status(204).end() : res.status(404).json({ error: 'Person not found' });
 }));
 
 // Global Error Handling Middleware
@@ -119,7 +113,10 @@ app.use((error, req, res, next) => {
 });
 
 // Start Server
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
+}).on('error', err => {
+    console.error("❌ Server failed to start:", err);
 });
+
