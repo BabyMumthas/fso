@@ -1,0 +1,28 @@
+{
+  "name": "phonebook-api",
+  "version": "1.0.0",
+  "description": "Simple REST API with NodeJS and Express",
+  "master": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node backend/index.js",
+    "dev": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint .",
+    "build": "echo 'No build step needed'"
+  },
+  "author": "Ananias CARVALHO <carvalhoananias@hotmail.com>",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^8.6.0",
+    "express": "^4.21.2",
+    "mongoose": "^5.13.23",
+    "mongoose-unique-validator": "^2.0.3",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "eslint": "^6.8.0",
+    "nodemon": "^2.0.2"
+  }
+}
